@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-mysql
+  namespace: sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-mysql
+  template:
+    metadata:
+      labels:
+        app: sample-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "barath"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: sample-mysql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-mysql
+  namespace: sample
+spec:
+  selector:
+    app: sample-mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+      nodePort: 31001
+  type: NodePort

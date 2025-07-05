@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-sql-import
+  namespace: sample
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: sql-import
+          image: mysql:8.0
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for MySQL to be ready..."
+              until mysql -hsample-mysql -P3306 -uroot -pbarath -e "SELECT 1"; do sleep 5; done
+              echo "Importing bar.sql..."
+              mysql -hsample-mysql -P3306 -uroot -pbarath < /mnt/bar.sql
+          volumeMounts:
+            - name: sql-dump
+              mountPath: /mnt
+      volumes:
+        - name: sql-dump
+          persistentVolumeClaim:
+            claimName: backup-mysql-pvc
